@@ -7,37 +7,39 @@ using UnityEngine;
 
 public class TrafficTask_Base
 {
+    public string taskName;
     public int maxPerTask = int.MaxValue;
-    public List<Traffic_AI> aircraftDoingTask;
+    public List<TrafficAI_Base> aircraftDoingTask;
 
-    public TrafficTask_Base()
+    public TrafficTask_Base(string newName)
     {
-        aircraftDoingTask = new List<Traffic_AI>();
+        aircraftDoingTask = new List<TrafficAI_Base>();
+        taskName = newName;
     }
 
-    public virtual bool CanStartTask(Traffic_AI ai) {
+    public virtual bool CanStartTask(TrafficAI_Base ai) {
         return aircraftDoingTask.Count() < maxPerTask;
     }
 
-    public virtual bool IsTaskCompleted(Traffic_AI ai)
+    public virtual bool IsTaskCompleted(TrafficAI_Base ai)
     {
         return true;
     }
 
-    public virtual void StartTask(Traffic_AI ai)
+    public virtual void StartTask(TrafficAI_Base ai)
     {
         aircraftDoingTask.Add(ai);
-        Debug.Log("There are now " + aircraftDoingTask.Count + " doing this task");
+        Debug.Log("Task started, there are now " + aircraftDoingTask.Count + " doing task: " + taskName);
     }
 
-    public virtual void UpdateTask(Traffic_AI ai)
+    public virtual void UpdateTask(TrafficAI_Base ai)
     {
 
     }
 
-    public virtual void EndTask(Traffic_AI ai)
+    public virtual void EndTask(TrafficAI_Base ai)
     {
         aircraftDoingTask.Remove(ai);
-        Debug.Log("There are now " + aircraftDoingTask.Count + " doing this task");
+        Debug.Log("Task completed, there are now " + aircraftDoingTask.Count + " doing task: " + taskName);
     }
 }

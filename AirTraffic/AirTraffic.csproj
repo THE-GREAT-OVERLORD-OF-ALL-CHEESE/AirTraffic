@@ -55,6 +55,9 @@
     <Reference Include="UnityEngine">
       <HintPath>..\Dependencies\UnityEngine.dll</HintPath>
     </Reference>
+    <Reference Include="UnityEngine.AnimationModule">
+      <HintPath>..\..\..\..\..\VTOLVR_Data\Managed\UnityEngine.AnimationModule.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>..\Dependencies\UnityEngine.CoreModule.dll</HintPath>
     </Reference>
@@ -68,12 +71,20 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TrafficAircraft\TrafficAircraft_Base.cs" />
     <Compile Include="TrafficAircraft\TrafficAircraft_Bomber.cs" />
+    <Compile Include="TrafficAircraft\TrafficAircraft_CAP.cs" />
     <Compile Include="TrafficAircraft\TrafficAircraft_KC49.cs" />
     <Compile Include="TrafficAircraft\TrafficAircraft_MQ31.cs" />
     <Compile Include="TrafficAircraft\TrafficAircraft_E4.cs" />
+    <Compile Include="TrafficAI_CAP.cs" />
+    <Compile Include="TrafficAI_Base.cs" />
+    <Compile Include="TrafficTasks\TrafficTask_CAP_Refuel.cs" />
+    <Compile Include="TrafficTasks\TrafficTask_CAP_Scout.cs" />
     <Compile Include="TrafficTasks\TrafficTask_FlyOffMap.cs" />
+    <Compile Include="TrafficTasks\TrafficTask_CAP.cs" />
+    <Compile Include="TrafficTasks\TrafficTask_Transport.cs" />
     <Compile Include="TrafficTasks\TrafficTask_LandAtAirport.cs" />
-    <Compile Include="Traffic_AI.cs" />
+    <Compile Include="TrafficTasks\TrafficTask_LandTemp.cs" />
+    <Compile Include="TrafficAI_Transport.cs" />
     <Compile Include="TrafficTasks\TrafficTask_Base.cs" />
   </ItemGroup>
   <ItemGroup />

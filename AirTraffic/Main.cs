@@ -95,7 +95,7 @@ public class AirTraffic : VTOLMOD
     void FixedUpdate() {
         if ((currentScene == VTOLScenes.Akutan || currentScene == VTOLScenes.CustomMapBase) && activeAircraftAmmount < targetAircraftAmmount) {
             Debug.Log("We lost an aircraft somewhere, adding a new one!");
-            Vector3D pos = AirTraffic.PointOnCruisingRadius();
+            Vector3D pos = PointOnCruisingRadius();
             Vector3 dir = -pos.toVector3;
             dir.y = 0;
             SpawnRandomAircraft(pos, dir);
@@ -107,8 +107,8 @@ public class AirTraffic : VTOLMOD
         Debug.Log("Setting up map tasks!");
         potentialTasks = new List<TrafficTask_Base>();
 
-        potentialTasks.Add(new TrafficTask_FlyOffMap());
-
+        potentialTasks.Add(new TrafficTask_FlyOffMap("fly off map"));
+        
         foreach (string airportId in VTScenario.current.GetAllAirportIDs())
         {
             float maxSize = 0;
@@ -128,18 +128,37 @@ public class AirTraffic : VTOLMOD
                 }
             }
 
-            potentialTasks.Add(new TrafficTask_LandAtAirport(new AirportReference(airportId), maxMass, maxSize, new AirportReference(airportId).GetAirport().vtolOnlyLanding));
+            potentialTasks.Add(new TrafficTask_LandAtAirport("land at airport " + new AirportReference(airportId).GetAirport().name, new AirportReference(airportId), maxMass, maxSize, new AirportReference(airportId).GetAirport().vtolOnlyLanding));
             Debug.Log("Added task land at " + airportId);
             Debug.Log("Maximum landing mass is " + maxMass);
             Debug.Log("Maximum landing size is " + maxSize);
+
+            //potentialTasks.Add(new TrafficTask_CAP_Scout("scout airbase: " + new AirportReference(airportId).GetAirport().name, VTMapManager.WorldToGlobalPoint(new AirportReference(airportId).GetAirport().transform.position)));
+        }
+
+        int oilrigCount = 0;
+        foreach (VTSODestructible oilrig in FindObjectsOfType<VTSODestructible>()) {
+            Debug.Log("Added task land at oilrig " + oilrigCount);
+            potentialTasks.Add(new TrafficTask_LandTemp("land at oilrig " + oilrigCount, oilrig.transform, new Vector3(49, 65, 48)));
+            oilrigCount++;
+        }
+
+        foreach (RefuelPlane rp in FindObjectsOfType<RefuelPlane>())
+        {
+            Debug.Log("Added task air to air refuel at " + rp.name);
+            //potentialTasks.Add(new TrafficTask_CAP_Refuel("refuel at " + rp.name, rp));
         }
     }
 
     void InitialSpawnTraffic(int ammount) {
-        activeAircraftAmmount = 0;
-
         Debug.Log("Spawing initial airtraffic");
         player = VTOLAPI.GetPlayersVehicleGameObject();
+
+        //GameObject aircraft = new TrafficAircraft_CAP().SpawnAircraft();
+        //float bearing2 = UnityEngine.Random.Range(0f, 360f) * Mathf.Deg2Rad;
+        //aircraft.GetComponent<TrafficAI_CAP>().Spawn(PointInCruisingRadius(), new Vector3(Mathf.Sin(bearing2), 0, Mathf.Cos(bearing2)));
+
+        activeAircraftAmmount = 0;
         
         for (int i = 0; i < targetAircraftAmmount; i++) {
             float bearing = UnityEngine.Random.Range(0f, 360f) * Mathf.Deg2Rad;
@@ -151,10 +170,12 @@ public class AirTraffic : VTOLMOD
         if (spawnableAircraft.Count > 0)
         {
             GameObject aircraft = spawnableAircraft[UnityEngine.Random.Range(0, spawnableAircraft.Count)].SpawnAircraft();
-            
-            aircraft.AddComponent<FloatingOriginTransform>();
 
-            Traffic_AI ai = aircraft.AddComponent<Traffic_AI>();
+            FloatingOriginTransform floatingTransform = aircraft.AddComponent<FloatingOriginTransform>();
+            floatingTransform.SetRigidbody(aircraft.GetComponent<Rigidbody>());
+            aircraft.GetComponent<Rigidbody>().interpolation = RigidbodyInterpolation.Interpolate;
+
+            TrafficAI_Transport ai = aircraft.AddComponent<TrafficAI_Transport>();
             GameObject unitSpawner = new GameObject();
             ai.aircraft.unitSpawner = unitSpawner.AddComponent<UnitSpawner>();
             Traverse unitSpawnerTraverse = Traverse.Create(ai.aircraft.unitSpawner);

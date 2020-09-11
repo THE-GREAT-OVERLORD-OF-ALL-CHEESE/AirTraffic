@@ -5,14 +5,14 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 
-class TrafficTask_LandAtAirport : TrafficTask_Base
+class TrafficTask_LandAtAirport : TrafficTask_Transport
 {
     public AirportReference airport;
     public float maxMass;
     public float maxSize;
     public bool vtolOnly;
 
-    public TrafficTask_LandAtAirport(AirportReference airport, float maxMass, float maxSize, bool vtolOnly)
+    public TrafficTask_LandAtAirport(string newName, AirportReference airport, float maxMass, float maxSize, bool vtolOnly) : base(newName)
     {
         this.airport = airport;
         this.maxMass = maxMass;
@@ -22,21 +22,30 @@ class TrafficTask_LandAtAirport : TrafficTask_Base
         maxPerTask = AirTraffic.maxAircraftPerAirportTask;
     }
 
-    public override bool CanStartTask(Traffic_AI ai)
+    public override bool CanStartTask(TrafficAI_Base ai)
     {
-        return base.CanStartTask(ai) && ai.pilot.parkingSize < maxSize && (ai.rb.mass < maxMass || (vtolOnly && ai.pilot.isVtol)) && ParkingAvailable(ai.pilot.parkingSize);
+        if (base.CanStartTask(ai))
+        {
+            TrafficAI_Transport transportAI = (TrafficAI_Transport)ai;
+            return transportAI.pilot.parkingSize < maxSize && (transportAI.rb.mass < maxMass || (vtolOnly && transportAI.pilot.isVtol)) && ParkingAvailable(transportAI.pilot.parkingSize);
+        }
+        else {
+            return false;
+        }
     }
 
-    public override bool IsTaskCompleted(Traffic_AI ai)
+    public override bool IsTaskCompleted(TrafficAI_Base ai)
     {
-        return ai.pilot.commandState == AIPilot.CommandStates.Orbit;
+        TrafficAI_Transport transportAI = (TrafficAI_Transport)ai;
+        return transportAI.pilot.commandState == AIPilot.CommandStates.Orbit;
     }
 
-    public override void StartTask(Traffic_AI ai)
+    public override void StartTask(TrafficAI_Base ai)
     {
         Debug.Log("Starting landing at airport task!");
         Debug.Log("Trying to land on " + airport.id);
-        ai.aircraft.RearmAt(airport);
+        TrafficAI_Transport transportAI = (TrafficAI_Transport)ai;
+        transportAI.aircraft.RearmAt(airport);
         base.StartTask(ai);
     }
 
