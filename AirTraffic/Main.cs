@@ -27,6 +27,15 @@ public class AirTraffic : VTOLMOD
     public UnityAction<int> targetAircraftAmmount_changed;
     public int targetAircraftAmmount = 15;
 
+    public UnityAction<bool> useTransportAV42_changed;
+    public bool useTransportAV42 = true;
+
+    public UnityAction<bool> useTransportBig_changed;
+    public bool useTransportBig = true;
+
+    public UnityAction<bool> useTransportDrone_changed;
+    public bool useTransportDrone = true;
+
     public override void ModLoaded()
     {
         HarmonyInstance harmony = HarmonyInstance.Create("cheese.airtraffic");
@@ -36,20 +45,28 @@ public class AirTraffic : VTOLMOD
         VTOLAPI.SceneLoaded += SceneLoaded;
         VTOLAPI.MissionReloaded += MissionReloaded;
 
-        spawnableAircraft = new List<TrafficAircraft_Base>();
-        spawnableAircraft.Add(new TrafficAircraft_Base());//its the base class everything inherits from, but also it is actually the AV-42
-        spawnableAircraft.Add(new TrafficAircraft_E4());
-        spawnableAircraft.Add(new TrafficAircraft_KC49());
-        spawnableAircraft.Add(new TrafficAircraft_MQ31());
-        //spawnableAircraft.Add(new TrafficAircraft_Bomber());
-        //bombers suck at taxiing, so im not including them
+        UpdateTransportAircraft();
 
         Settings settings = new Settings(this);
         settings.CreateCustomLabel("Air Traffic Settings");
 
         targetAircraftAmmount_changed += targetAircraftAmmount_Setting;
         settings.CreateCustomLabel("Ammount of air traffic aircraft:");
-        settings.CreateIntSetting("(Default = 15)", targetAircraftAmmount_changed, targetAircraftAmmount, 0, 100);
+        settings.CreateIntSetting("(Default = 15)", targetAircraftAmmount_changed);
+
+        useTransportAV42_changed += useTransportAV42_Setting;
+        settings.CreateCustomLabel("Allow AV-42 to spawn as traffic:");
+        settings.CreateBoolSetting("(Default = true)", useTransportAV42_changed, useTransportAV42);
+
+        useTransportBig_changed += useTransportBig_Setting;
+        settings.CreateCustomLabel("Allow big aircraft to spawn as traffic:");
+        settings.CreateCustomLabel("(Modified KC-49 and E-4)");
+        settings.CreateBoolSetting("(Default = true)", useTransportBig_changed, useTransportBig);
+
+        useTransportDrone_changed += useTransportDrone_Setting;
+        settings.CreateCustomLabel("Allow amazoon drone to spawn as traffic:");
+        settings.CreateCustomLabel("(Modified refuel plane)");
+        settings.CreateBoolSetting("(Default = true)", useTransportDrone_changed, useTransportDrone);
 
         settings.CreateCustomLabel("Please feel free to @ me on the discord if");
         settings.CreateCustomLabel("you think of any more features I could add!");
@@ -57,9 +74,44 @@ public class AirTraffic : VTOLMOD
         VTOLAPI.CreateSettingsMenu(settings);
     }
 
+    public void UpdateTransportAircraft() {
+        spawnableAircraft = new List<TrafficAircraft_Base>();
+        if (useTransportAV42) {
+            spawnableAircraft.Add(new TrafficAircraft_Base());//its the base class everything inherits from, but also it is actually the AV-42
+        }
+        if (useTransportBig)
+        {
+            spawnableAircraft.Add(new TrafficAircraft_E4());
+            spawnableAircraft.Add(new TrafficAircraft_KC49());
+        }
+        if (useTransportDrone) {
+            spawnableAircraft.Add(new TrafficAircraft_MQ31());
+        }
+        //spawnableAircraft.Add(new TrafficAircraft_Bomber());
+        //bombers suck at taxiing, so im not including them
+    }
+
     public void targetAircraftAmmount_Setting(int newval)
     {
         targetAircraftAmmount = newval;
+    }
+
+    public void useTransportAV42_Setting(bool newval)
+    {
+        useTransportAV42 = newval;
+        UpdateTransportAircraft();
+    }
+
+    public void useTransportBig_Setting(bool newval)
+    {
+        useTransportBig = newval;
+        UpdateTransportAircraft();
+    }
+
+    public void useTransportDrone_Setting(bool newval)
+    {
+        useTransportDrone = newval;
+        UpdateTransportAircraft();
     }
 
     void SceneLoaded(VTOLScenes scene)
@@ -93,7 +145,7 @@ public class AirTraffic : VTOLMOD
     }
 
     void FixedUpdate() {
-        if ((currentScene == VTOLScenes.Akutan || currentScene == VTOLScenes.CustomMapBase) && activeAircraftAmmount < targetAircraftAmmount) {
+        if ((currentScene == VTOLScenes.Akutan || currentScene == VTOLScenes.CustomMapBase) && activeAircraftAmmount < targetAircraftAmmount && spawnableAircraft.Count > 0) {
             Debug.Log("We lost an aircraft somewhere, adding a new one!");
             Vector3D pos = PointOnCruisingRadius();
             Vector3 dir = -pos.toVector3;
