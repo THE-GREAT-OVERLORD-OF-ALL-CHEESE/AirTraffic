@@ -21,20 +21,23 @@ public class AirTraffic : VTOLMOD
     public static List<TrafficTask_Base> potentialTasks;
     public static int maxAircraftPerAirportTask = 2;
 
-    public static float trafficRadius = 50000;
+    public static float trafficRadius = 50000;//50000
     public static MinMax cruisingAltitudes = new MinMax(3048, 9144);
 
     public UnityAction<int> targetAircraftAmmount_changed;
-    public int targetAircraftAmmount = 15;
+    public int targetAircraftAmmount = 15;//was 15
 
     public UnityAction<bool> useTransportAV42_changed;
-    public bool useTransportAV42 = true;
+    public bool useTransportAV42 = true;//true
 
     public UnityAction<bool> useTransportBig_changed;
-    public bool useTransportBig = true;
+    public bool useTransportBig = true;//true
 
     public UnityAction<bool> useTransportDrone_changed;
-    public bool useTransportDrone = true;
+    public bool useTransportDrone = true;//true
+
+    public UnityAction<bool> useFighters_changed;
+    public bool useFighters = true;//true
 
     public override void ModLoaded()
     {
@@ -50,24 +53,33 @@ public class AirTraffic : VTOLMOD
         Settings settings = new Settings(this);
         settings.CreateCustomLabel("Air Traffic Settings");
 
+        settings.CreateCustomLabel("");
+        settings.CreateCustomLabel("Transport Aircraft");
+
         targetAircraftAmmount_changed += targetAircraftAmmount_Setting;
-        settings.CreateCustomLabel("Ammount of air traffic aircraft:");
+        settings.CreateCustomLabel("Ammount of transport aircraft:");
         settings.CreateIntSetting("(Default = 15)", targetAircraftAmmount_changed);
 
         useTransportAV42_changed += useTransportAV42_Setting;
-        settings.CreateCustomLabel("Allow AV-42 to spawn as traffic:");
+        settings.CreateCustomLabel("Allow AV-42 to spawn as transport:");
         settings.CreateBoolSetting("(Default = true)", useTransportAV42_changed, useTransportAV42);
 
         useTransportBig_changed += useTransportBig_Setting;
-        settings.CreateCustomLabel("Allow big aircraft to spawn as traffic:");
+        settings.CreateCustomLabel("Allow big aircraft to spawn as transport:");
         settings.CreateCustomLabel("(Modified KC-49 and E-4)");
         settings.CreateBoolSetting("(Default = true)", useTransportBig_changed, useTransportBig);
 
         useTransportDrone_changed += useTransportDrone_Setting;
-        settings.CreateCustomLabel("Allow amazoon drone to spawn as traffic:");
+        settings.CreateCustomLabel("Allow amazoon drone to spawn as transport:");
         settings.CreateCustomLabel("(Modified refuel plane)");
         settings.CreateBoolSetting("(Default = true)", useTransportDrone_changed, useTransportDrone);
 
+        useFighters_changed += useFighters_Setting;
+        settings.CreateCustomLabel("Allow fighter jets to spawn as transport:");
+        settings.CreateCustomLabel("(F/A-26 and F45s)");
+        settings.CreateBoolSetting("(Default = false)", useFighters_changed, useFighters);
+
+        settings.CreateCustomLabel("");
         settings.CreateCustomLabel("Please feel free to @ me on the discord if");
         settings.CreateCustomLabel("you think of any more features I could add!");
 
@@ -76,7 +88,8 @@ public class AirTraffic : VTOLMOD
 
     public void UpdateTransportAircraft() {
         spawnableAircraft = new List<TrafficAircraft_Base>();
-        if (useTransportAV42) {
+        if (useTransportAV42)
+        {
             spawnableAircraft.Add(new TrafficAircraft_Base());//its the base class everything inherits from, but also it is actually the AV-42
         }
         if (useTransportBig)
@@ -84,8 +97,14 @@ public class AirTraffic : VTOLMOD
             spawnableAircraft.Add(new TrafficAircraft_E4());
             spawnableAircraft.Add(new TrafficAircraft_KC49());
         }
-        if (useTransportDrone) {
+        if (useTransportDrone)
+        {
             spawnableAircraft.Add(new TrafficAircraft_MQ31());
+        }
+        if (useFighters)
+        {
+            spawnableAircraft.Add(new TrafficAircraft_FA26());
+            spawnableAircraft.Add(new TrafficAircraft_F45());
         }
         //spawnableAircraft.Add(new TrafficAircraft_Bomber());
         //bombers suck at taxiing, so im not including them
@@ -111,6 +130,12 @@ public class AirTraffic : VTOLMOD
     public void useTransportDrone_Setting(bool newval)
     {
         useTransportDrone = newval;
+        UpdateTransportAircraft();
+    }
+
+    public void useFighters_Setting(bool newval)
+    {
+        useFighters = newval;
         UpdateTransportAircraft();
     }
 
@@ -224,7 +249,10 @@ public class AirTraffic : VTOLMOD
             GameObject aircraft = spawnableAircraft[UnityEngine.Random.Range(0, spawnableAircraft.Count)].SpawnAircraft();
 
             FloatingOriginTransform floatingTransform = aircraft.AddComponent<FloatingOriginTransform>();
-            floatingTransform.SetRigidbody(aircraft.GetComponent<Rigidbody>());
+            if (floatingTransform != null)
+            {
+                floatingTransform.SetRigidbody(aircraft.GetComponent<Rigidbody>());
+            }
             aircraft.GetComponent<Rigidbody>().interpolation = RigidbodyInterpolation.Interpolate;
 
             TrafficAI_Transport ai = aircraft.AddComponent<TrafficAI_Transport>();
@@ -232,6 +260,8 @@ public class AirTraffic : VTOLMOD
             ai.aircraft.unitSpawner = unitSpawner.AddComponent<UnitSpawner>();
             Traverse unitSpawnerTraverse = Traverse.Create(ai.aircraft.unitSpawner);
             unitSpawnerTraverse.Field("_spawned").SetValue(true);
+            Traverse aircraftSpawnerTraverse = Traverse.Create(ai.aircraft);
+            aircraftSpawnerTraverse.Field("taxiSpeed").SetValue(ai.aircraft.aiPilot.taxiSpeed);
             ai.Spawn(pos, dir);
 
             Debug.Log("Spawned " + aircraft.name + " as air traffic");

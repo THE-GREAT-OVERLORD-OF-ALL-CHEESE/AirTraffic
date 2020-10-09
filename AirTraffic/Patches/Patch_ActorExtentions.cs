@@ -15,7 +15,20 @@ class Patch_ActorExtensions_DebugName
     static bool Prefix(ref string __result)
     {
         __result = "string lmao";
-        Debug.Log("DebugName");
         return false;
     }
 }
+
+/*
+[HarmonyPatch(typeof(AIPilot), "TaxiAirbaseNav")]
+class Patch_AIPilot_TaxiAirbaseNav
+{
+    [HarmonyPrefix]
+    static bool Prefix(List<AirbaseNavNode> navTfs, Runway tgtRunway, AIPilot __instance)
+    {
+        Debug.Log("This is the taxi patch");
+        __instance.StartCoroutine(AirTraffic.AirbaseNavTaxiRoutine(navTfs, tgtRunway, __instance));
+        return false;
+    }
+}
+*/
