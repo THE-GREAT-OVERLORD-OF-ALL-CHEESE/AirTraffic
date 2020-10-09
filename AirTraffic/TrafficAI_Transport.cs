@@ -41,33 +41,6 @@ public class TrafficAI_Transport : TrafficAI_Base
             dir.y = 0;
             Spawn(pos, dir);
         }
-
-        if (doorAnimator != null) {
-            if (pilot.commandState == AIPilot.CommandStates.Park)
-            {
-                if (doorPosition < 1)
-                {
-                    doorAnimator.SetFloat("doorSpeed", 1f);
-                    doorPosition += Time.fixedDeltaTime;
-                }
-                else
-                {
-                    doorAnimator.SetFloat("doorSpeed", 0f);
-                }
-            }
-            else
-            {
-                if (doorPosition > 0)
-                {
-                    doorAnimator.SetFloat("doorSpeed", -1f);
-                    doorPosition -= Time.fixedDeltaTime;
-                }
-                else
-                {
-                    doorAnimator.SetFloat("doorSpeed", 0f);
-                }
-            }
-        }
     }
 
     public override void Spawn(Vector3D pos, Vector3 dir) {
