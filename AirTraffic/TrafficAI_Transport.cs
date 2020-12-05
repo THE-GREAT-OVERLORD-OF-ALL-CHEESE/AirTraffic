@@ -12,14 +12,23 @@ public class TrafficAI_Transport : TrafficAI_Base
     public Rigidbody rb;
     public TiltController tilter;
 
-    public Animator doorAnimator;
-    public float doorPosition;
+    public GearAnimator gearAnimator;
+    public KinematicPlane kPlane;
+    public FuelTank fuelTank;
+
+    //public Animator doorAnimator;
+    //public float doorPosition;
 
     void Awake() {
         aircraft = GetComponent<AIAircraftSpawn>();
         pilot = GetComponent<AIPilot>();
         rb = GetComponent<Rigidbody>();
-        doorAnimator = GetComponentInChildren<Animator>();
+        //doorAnimator = GetComponentInChildren<Animator>();
+
+        gearAnimator = GetComponentInChildren<GearAnimator>();
+        kPlane = GetComponent<KinematicPlane>();
+
+        fuelTank = GetComponent<FuelTank>();
 
         waypoint = new Waypoint();
         GameObject waypointObject = new GameObject();
@@ -50,8 +59,10 @@ public class TrafficAI_Transport : TrafficAI_Base
         //aircraft.SetOrbitNow(waypoint, 10000, AirTraffic.cruisingAltitudes.Random());
         pilot.CommandCancelOverride();
 
-        GetComponentInChildren<GearAnimator>().RetractImmediate();
-        GetComponent<KinematicPlane>().SetToKinematic();
+        gearAnimator.RetractImmediate();
+        kPlane.SetToKinematic();
+
+        fuelTank.SetNormFuel(1);
     }
 
     public override void OnStartTask()

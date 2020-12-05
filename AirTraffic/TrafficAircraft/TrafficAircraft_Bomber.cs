@@ -10,6 +10,7 @@ public class TrafficAircraft_Bomber : TrafficAircraft_Base
     public override GameObject SpawnAircraft()
     {
         GameObject plane = GameObject.Instantiate(UnitCatalogue.GetUnitPrefab("ABomberAI"));
+        plane.name = "ABomberAI";
         return plane;
     }
 }

@@ -39,6 +39,9 @@ public class AirTraffic : VTOLMOD
     public UnityAction<bool> useFighters_changed;
     public bool useFighters = true;//true
 
+    public UnityAction<bool> useBomber_changed;
+    public bool useBomber = true;//true
+
     public override void ModLoaded()
     {
         HarmonyInstance harmony = HarmonyInstance.Create("cheese.airtraffic");
@@ -77,7 +80,11 @@ public class AirTraffic : VTOLMOD
         useFighters_changed += useFighters_Setting;
         settings.CreateCustomLabel("Allow fighter jets to spawn as transport:");
         settings.CreateCustomLabel("(F/A-26 and F45s)");
-        settings.CreateBoolSetting("(Default = false)", useFighters_changed, useFighters);
+        settings.CreateBoolSetting("(Default = true)", useFighters_changed, useFighters);
+
+        useBomber_changed += useBomber_Setting;
+        settings.CreateCustomLabel("Allow bombers to spawn as supersonic transport:");
+        settings.CreateBoolSetting("(Default = true)", useFighters_changed, useFighters);
 
         settings.CreateCustomLabel("");
         settings.CreateCustomLabel("Please feel free to @ me on the discord if");
@@ -106,8 +113,16 @@ public class AirTraffic : VTOLMOD
             spawnableAircraft.Add(new TrafficAircraft_FA26());
             spawnableAircraft.Add(new TrafficAircraft_F45());
         }
-        //spawnableAircraft.Add(new TrafficAircraft_Bomber());
-        //bombers suck at taxiing, so im not including them
+        if (useFighters)
+        {
+            spawnableAircraft.Add(new TrafficAircraft_FA26());
+            spawnableAircraft.Add(new TrafficAircraft_F45());
+        }
+        if (useBomber)
+        {
+            //bombers suck at taxiing, so they cannot land
+            spawnableAircraft.Add(new TrafficAircraft_Bomber());
+        }        
     }
 
     public void targetAircraftAmmount_Setting(int newval)
@@ -136,6 +151,12 @@ public class AirTraffic : VTOLMOD
     public void useFighters_Setting(bool newval)
     {
         useFighters = newval;
+        UpdateTransportAircraft();
+    }
+
+    public void useBomber_Setting(bool newval)
+    {
+        useBomber = newval;
         UpdateTransportAircraft();
     }
 

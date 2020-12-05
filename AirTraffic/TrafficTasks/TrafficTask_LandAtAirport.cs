@@ -26,6 +26,9 @@ class TrafficTask_LandAtAirport : TrafficTask_Transport
     {
         if (base.CanStartTask(ai))
         {
+            if (ai.gameObject.name == "ABomberAI")
+                return false;
+
             TrafficAI_Transport transportAI = (TrafficAI_Transport)ai;
             return transportAI.pilot.parkingSize < maxSize && (transportAI.rb.mass < maxMass || (vtolOnly && transportAI.pilot.isVtol)) && ParkingAvailable(transportAI.pilot.parkingSize);
         }
