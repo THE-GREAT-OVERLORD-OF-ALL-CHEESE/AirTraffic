@@ -20,6 +20,7 @@ public class AirTraffic : VTOLMOD
     public List<TrafficAircraft_Base> spawnableAircraft;
     public static List<TrafficTask_Base> potentialTasks;
     public static int maxAircraftPerAirportTask = 2;
+    public static int maxAircraftPerRefuelTask = 2;
 
     public static float trafficRadius = 50000;//50000
     public static MinMax cruisingAltitudes = new MinMax(3048, 9144);
@@ -245,6 +246,7 @@ public class AirTraffic : VTOLMOD
         {
             Debug.Log("Added task air to air refuel at " + rp.name);
             //potentialTasks.Add(new TrafficTask_CAP_Refuel("refuel at " + rp.name, rp));
+            potentialTasks.Add(new TrafficTask_Transport_Refuel("refuel at " + rp.name, rp));
         }
     }
 

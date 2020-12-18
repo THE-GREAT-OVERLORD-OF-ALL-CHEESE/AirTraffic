@@ -79,6 +79,7 @@
     <Compile Include="TrafficAircraft\TrafficAircraft_E4.cs" />
     <Compile Include="TrafficAI_CAP.cs" />
     <Compile Include="TrafficAI_Base.cs" />
+    <Compile Include="TrafficTasks\TrafficTask_Transport_Refuel.cs" />
     <Compile Include="TrafficTasks\TrafficTask_CAP_Refuel.cs" />
     <Compile Include="TrafficTasks\TrafficTask_CAP_Scout.cs" />
     <Compile Include="TrafficTasks\TrafficTask_FlyOffMap.cs" />

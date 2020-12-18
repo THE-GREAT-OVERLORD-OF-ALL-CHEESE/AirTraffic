@@ -23,6 +23,7 @@ class TrafficTask_FlyOffMap : TrafficTask_Transport
         TrafficAI_Transport ai2 = (TrafficAI_Transport)ai;
         ai2.waypoint.GetTransform().position = VTMapManager.GlobalToWorldPoint(AirTraffic.PointOnMapRadius());
         ai2.aircraft.SetOrbitNow(ai2.waypoint, 10000, AirTraffic.cruisingAltitudes.Random());
+        ai2.pilot.navSpeed = UnityEngine.Random.Range(ai2.normalSpeed, ai2.pilot.maxSpeed);
         base.StartTask(ai2);
     }
 }

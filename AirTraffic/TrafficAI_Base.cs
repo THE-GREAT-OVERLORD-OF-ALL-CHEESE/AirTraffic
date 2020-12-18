@@ -10,6 +10,8 @@ public class TrafficAI_Base : MonoBehaviour
     public int lastTaskID = -1;
     public int currentTask = -1;
 
+    public float taskTimer;
+
     public Waypoint waypoint;
 
     void Awake() {
@@ -33,13 +35,17 @@ public class TrafficAI_Base : MonoBehaviour
                 currentTask = taskID;
                 lastTaskID = taskID;
                 AirTraffic.potentialTasks[currentTask].StartTask(this);
+                Debug.Log(gameObject.name + " starting task " + AirTraffic.potentialTasks[currentTask].taskName);
+                taskTimer = 0;
                 OnStartTask();
             }
         }
         else {
+            taskTimer += Time.fixedDeltaTime;
             if (AirTraffic.potentialTasks[currentTask].IsTaskCompleted(this))
             {
                 AirTraffic.potentialTasks[currentTask].EndTask(this);
+                Debug.Log(gameObject.name + " completed task " + AirTraffic.potentialTasks[currentTask].taskName + " in " + taskTimer + " secconds");
                 currentTask = -1;
             }
             else {

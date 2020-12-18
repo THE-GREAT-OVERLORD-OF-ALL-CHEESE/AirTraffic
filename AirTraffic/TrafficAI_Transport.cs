@@ -13,8 +13,15 @@ public class TrafficAI_Transport : TrafficAI_Base
     public TiltController tilter;
 
     public GearAnimator gearAnimator;
+    public Tailhook tailHook;
+    public CatapultHook catHook;
+    public RefuelPort refuelPort;
+    public RotationToggle wingRotator;
+
     public KinematicPlane kPlane;
     public FuelTank fuelTank;
+
+    public float normalSpeed;
 
     //public Animator doorAnimator;
     //public float doorPosition;
@@ -26,8 +33,12 @@ public class TrafficAI_Transport : TrafficAI_Base
         //doorAnimator = GetComponentInChildren<Animator>();
 
         gearAnimator = GetComponentInChildren<GearAnimator>();
-        kPlane = GetComponent<KinematicPlane>();
+        tailHook = GetComponentInChildren<Tailhook>();
+        catHook = GetComponentInChildren<CatapultHook>();
+        refuelPort = GetComponentInChildren<RefuelPort>();
+        wingRotator = pilot.wingRotator;
 
+        kPlane = GetComponent<KinematicPlane>();
         fuelTank = GetComponent<FuelTank>();
 
         waypoint = new Waypoint();
@@ -36,6 +47,8 @@ public class TrafficAI_Transport : TrafficAI_Base
         waypoint.SetTransform(waypointObject.transform);
 
         tilter = GetComponent<TiltController>();
+
+        normalSpeed = pilot.navSpeed;
 
         GetComponent<Health>().OnDeath.AddListener(OnDeath);
     }
@@ -60,6 +73,11 @@ public class TrafficAI_Transport : TrafficAI_Base
         pilot.CommandCancelOverride();
 
         gearAnimator.RetractImmediate();
+        tailHook?.RetractHook();
+        catHook?.SetState(0);
+        wingRotator?.SetDefault();
+        refuelPort.Close();
+
         kPlane.SetToKinematic();
 
         fuelTank.SetNormFuel(1);
@@ -75,6 +93,9 @@ public class TrafficAI_Transport : TrafficAI_Base
 
     void OnDeath() {
         Debug.Log(gameObject.name + " just died");
+        if (currentTask != -1) {
+            AirTraffic.potentialTasks[currentTask].EndTask(this);
+        }
         AirTraffic.activeAircraftAmmount--;
     }
 }
