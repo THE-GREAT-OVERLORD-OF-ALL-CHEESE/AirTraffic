@@ -1,11 +1,7 @@
 using Harmony;
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -42,6 +38,12 @@ public class AirTraffic : VTOLMOD
 
     public UnityAction<bool> useBomber_changed;
     public bool useBomber = true;//true
+
+    public UnityAction<bool> mpTestMode_changed;
+    public bool mpTestMode = false;//false
+
+    public bool mpMode = false;
+    public bool host = false;
 
     public override void ModLoaded()
     {
@@ -85,7 +87,13 @@ public class AirTraffic : VTOLMOD
 
         useBomber_changed += useBomber_Setting;
         settings.CreateCustomLabel("Allow bombers to spawn as supersonic transport:");
-        settings.CreateBoolSetting("(Default = true)", useFighters_changed, useFighters);
+        settings.CreateBoolSetting("(Default = true)", useBomber_changed, useBomber);
+
+        mpTestMode_changed += useBomber_Setting;
+        settings.CreateCustomLabel("MP Test Mode:");
+        settings.CreateBoolSetting("(Default = false)", mpTestMode_changed, mpTestMode);
+        settings.CreateCustomLabel("This spreads the aircraft across the entire map instead of just near the player.");
+        settings.CreateCustomLabel("DO NOT USE, IT IS NOT NECESSARY FOR MP");
 
         settings.CreateCustomLabel("");
         settings.CreateCustomLabel("Please feel free to @ me on the discord if");
@@ -187,18 +195,37 @@ public class AirTraffic : VTOLMOD
             yield return null;
         }
 
+        MPCheck();
         SetupTasks();
         InitialSpawnTraffic(targetAircraftAmmount);
     }
 
     void FixedUpdate() {
-        if ((currentScene == VTOLScenes.Akutan || currentScene == VTOLScenes.CustomMapBase) && activeAircraftAmmount < targetAircraftAmmount && spawnableAircraft.Count > 0) {
+        if ((currentScene == VTOLScenes.Akutan || currentScene == VTOLScenes.CustomMapBase) && activeAircraftAmmount < targetAircraftAmmount && spawnableAircraft.Count > 0)
+        {
             Debug.Log("We lost an aircraft somewhere, adding a new one!");
             Vector3D pos = PointOnCruisingRadius();
             Vector3 dir = -pos.toVector3;
             dir.y = 0;
             SpawnRandomAircraft(pos, dir);
         }
+    }
+
+    void MPCheck() {
+        foreach (Mod mod in VTOLAPI.GetUsersMods()) {
+            if (mod.name == "Multiplayer") {
+                Debug.Log("Airtraffic has detected MP, enbling MP mode");
+                mpMode = true;
+                HostCheck();
+                break;
+            }
+        }
+        Debug.Log("The MP mod is not installed.");
+    }
+
+    void HostCheck()
+    {
+        host = Networker.isHost;
     }
 
     void SetupTasks()
@@ -252,6 +279,10 @@ public class AirTraffic : VTOLMOD
 
     void InitialSpawnTraffic(int ammount) {
         Debug.Log("Spawing initial airtraffic");
+        if (mpMode && host == false) {
+            return;
+        }
+
         player = VTOLAPI.GetPlayersVehicleGameObject();
 
         //GameObject aircraft = new TrafficAircraft_CAP().SpawnAircraft();
@@ -267,6 +298,10 @@ public class AirTraffic : VTOLMOD
     }
 
     void SpawnRandomAircraft(Vector3D pos, Vector3 dir) {
+        if (mpMode && host == false) {
+            return;
+        }
+
         if (spawnableAircraft.Count > 0)
         {
             GameObject aircraft = spawnableAircraft[UnityEngine.Random.Range(0, spawnableAircraft.Count)].SpawnAircraft();
@@ -279,7 +314,7 @@ public class AirTraffic : VTOLMOD
             aircraft.GetComponent<Rigidbody>().interpolation = RigidbodyInterpolation.Interpolate;
 
             TrafficAI_Transport ai = aircraft.AddComponent<TrafficAI_Transport>();
-            GameObject unitSpawner = new GameObject();
+            GameObject unitSpawner = new GameObject();//is this ever destroyed?
             ai.aircraft.unitSpawner = unitSpawner.AddComponent<UnitSpawner>();
             Traverse unitSpawnerTraverse = Traverse.Create(ai.aircraft.unitSpawner);
             unitSpawnerTraverse.Field("_spawned").SetValue(true);
@@ -289,15 +324,25 @@ public class AirTraffic : VTOLMOD
 
             Debug.Log("Spawned " + aircraft.name + " as air traffic");
             activeAircraftAmmount++;
+
+            if (mpMode) {
+                Debug.Log("MP is enabled, networking this aircraft!");
+                MPSetUpAircraft(ai.aircraft.actor);
+            }
         }
         else {
             Debug.Log("No aircraft were available, cannot spawn a traffic aircraft.");
         }
     }
 
+    private void MPSetUpAircraft(Actor actor) {
+        AIManager.setupAIAircraft(actor);
+        AIManager.TellClientAboutAI(new Steamworks.CSteamID(0));
+    }
+
     public static Vector3D GetPlayerPosition()
     {
-        return VTMapManager.WorldToGlobalPoint(player.transform.position);
+        return VTMapManager.WorldToGlobalPoint(FlightSceneManager.instance.playerActor.gameObject.transform.position);
     }
 
     public static Vector3D PointInCruisingRadius()
