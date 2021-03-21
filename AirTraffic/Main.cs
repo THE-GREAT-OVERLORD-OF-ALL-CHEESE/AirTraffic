@@ -8,7 +8,8 @@ using UnityEngine.Events;
 
 public class AirTraffic : VTOLMOD
 {
-    public static GameObject player;
+    public static AirTraffic instance;
+
     public VTOLScenes currentScene;
 
     public static int activeAircraftAmmount;
@@ -20,6 +21,7 @@ public class AirTraffic : VTOLMOD
 
     public static float trafficRadius = 50000;//50000
     public static MinMax cruisingAltitudes = new MinMax(3048, 9144);
+    public static float mapRadius;
 
     public UnityAction<int> targetAircraftAmmount_changed;
     public int targetAircraftAmmount = 15;//was 15
@@ -45,6 +47,8 @@ public class AirTraffic : VTOLMOD
     public bool mpMode = false;
     public bool host = false;
 
+    public bool akutan = false;
+
     public override void ModLoaded()
     {
         HarmonyInstance harmony = HarmonyInstance.Create("cheese.airtraffic");
@@ -64,7 +68,7 @@ public class AirTraffic : VTOLMOD
 
         targetAircraftAmmount_changed += targetAircraftAmmount_Setting;
         settings.CreateCustomLabel("Ammount of transport aircraft:");
-        settings.CreateIntSetting("(Default = 15)", targetAircraftAmmount_changed);
+        settings.CreateIntSetting("(Default = 15)", targetAircraftAmmount_changed, targetAircraftAmmount);
 
         useTransportAV42_changed += useTransportAV42_Setting;
         settings.CreateCustomLabel("Allow AV-42 to spawn as transport:");
@@ -89,7 +93,7 @@ public class AirTraffic : VTOLMOD
         settings.CreateCustomLabel("Allow bombers to spawn as supersonic transport:");
         settings.CreateBoolSetting("(Default = true)", useBomber_changed, useBomber);
 
-        mpTestMode_changed += useBomber_Setting;
+        mpTestMode_changed += mpTestMode_Setting;
         settings.CreateCustomLabel("MP Test Mode:");
         settings.CreateBoolSetting("(Default = false)", mpTestMode_changed, mpTestMode);
         settings.CreateCustomLabel("This spreads the aircraft across the entire map instead of just near the player.");
@@ -100,6 +104,8 @@ public class AirTraffic : VTOLMOD
         settings.CreateCustomLabel("you think of any more features I could add!");
 
         VTOLAPI.CreateSettingsMenu(settings);
+
+        instance = this;
     }
 
     public void UpdateTransportAircraft() {
@@ -169,13 +175,22 @@ public class AirTraffic : VTOLMOD
         UpdateTransportAircraft();
     }
 
+    public void mpTestMode_Setting(bool newval)
+    {
+        mpTestMode = newval;
+    }
+
     void SceneLoaded(VTOLScenes scene)
     {
         currentScene = scene;
         switch (scene)
         {
             case VTOLScenes.Akutan:
+                akutan = true;
+                StartCoroutine("SetupScene");
+                break;
             case VTOLScenes.CustomMapBase:
+                akutan = true;
                 StartCoroutine("SetupScene");
                 break;
             default:
@@ -195,6 +210,10 @@ public class AirTraffic : VTOLMOD
             yield return null;
         }
 
+        mapRadius = VTMapManager.fetch.map.mapSize * 1500;
+        if (mpMode || mpTestMode) {
+            Debug.Log("mp mode: airtraffic will operate map wide");
+        }
         MPCheck();
         SetupTasks();
         InitialSpawnTraffic(targetAircraftAmmount);
@@ -283,8 +302,6 @@ public class AirTraffic : VTOLMOD
             return;
         }
 
-        player = VTOLAPI.GetPlayersVehicleGameObject();
-
         //GameObject aircraft = new TrafficAircraft_CAP().SpawnAircraft();
         //float bearing2 = UnityEngine.Random.Range(0f, 360f) * Mathf.Deg2Rad;
         //aircraft.GetComponent<TrafficAI_CAP>().Spawn(PointInCruisingRadius(), new Vector3(Mathf.Sin(bearing2), 0, Mathf.Cos(bearing2)));
@@ -314,7 +331,7 @@ public class AirTraffic : VTOLMOD
             aircraft.GetComponent<Rigidbody>().interpolation = RigidbodyInterpolation.Interpolate;
 
             TrafficAI_Transport ai = aircraft.AddComponent<TrafficAI_Transport>();
-            GameObject unitSpawner = new GameObject();//is this ever destroyed?
+            GameObject unitSpawner = new GameObject();
             ai.aircraft.unitSpawner = unitSpawner.AddComponent<UnitSpawner>();
             Traverse unitSpawnerTraverse = Traverse.Create(ai.aircraft.unitSpawner);
             unitSpawnerTraverse.Field("_spawned").SetValue(true);
@@ -342,7 +359,26 @@ public class AirTraffic : VTOLMOD
 
     public static Vector3D GetPlayerPosition()
     {
-        return VTMapManager.WorldToGlobalPoint(FlightSceneManager.instance.playerActor.gameObject.transform.position);
+        if ((instance.mpMode || instance.mpTestMode) && instance.akutan == false)
+        {
+            return new Vector3D(mapRadius, 0, mapRadius);
+        }
+        else
+        {
+            return VTMapManager.WorldToGlobalPoint(FlightSceneManager.instance.playerActor.gameObject.transform.position);
+        }
+    }
+
+    public static float GetTrafficRadius()
+    {
+        if ((instance.mpMode || instance.mpTestMode) && instance.akutan == false)
+        {
+            return mapRadius * 1.4f;
+        }
+        else
+        {
+            return trafficRadius;
+        }
     }
 
     public static Vector3D PointInCruisingRadius()
@@ -350,7 +386,7 @@ public class AirTraffic : VTOLMOD
         Vector2 randomCircle = UnityEngine.Random.insideUnitCircle;
         Vector3D playerPos = GetPlayerPosition();
 
-        return new Vector3D(randomCircle.x * trafficRadius + playerPos.x, cruisingAltitudes.Random(), randomCircle.y * trafficRadius + playerPos.z);
+        return new Vector3D(randomCircle.x * GetTrafficRadius() + playerPos.x, cruisingAltitudes.Random(), randomCircle.y * GetTrafficRadius() + playerPos.z); ;
     }
 
     public static Vector3D PointOnCruisingRadius()
@@ -358,7 +394,7 @@ public class AirTraffic : VTOLMOD
         float bearing = UnityEngine.Random.Range(0f, 360f) * Mathf.Deg2Rad;
         Vector3D playerPos = GetPlayerPosition();
 
-        return new Vector3D(Mathf.Sin(bearing) * trafficRadius + playerPos.x, cruisingAltitudes.Random(), Mathf.Cos(bearing) * trafficRadius + playerPos.z);
+        return new Vector3D(Mathf.Sin(bearing) * GetTrafficRadius() + playerPos.x, cruisingAltitudes.Random(), Mathf.Cos(bearing) * GetTrafficRadius() + playerPos.z);
     }
 
     public static Vector3D PointOnMapRadius()
@@ -366,7 +402,7 @@ public class AirTraffic : VTOLMOD
         float bearing = UnityEngine.Random.Range(0f, 360f) * Mathf.Deg2Rad;
         float mapRadius = VTMapManager.fetch.map.mapSize * 1500;
 
-        return new Vector3D(Mathf.Sin(bearing) * mapRadius * 1.4f + mapRadius, cruisingAltitudes.Random(), Mathf.Cos(bearing) * mapRadius * 1.4f + mapRadius);
+        return new Vector3D(Mathf.Sin(bearing) * mapRadius * 1.5f + mapRadius, cruisingAltitudes.Random(), Mathf.Cos(bearing) * mapRadius * 1.5f + mapRadius);
     }
 
     public static float DistanceFromOrigin(Vector3D otherPos)

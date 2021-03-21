@@ -73,6 +73,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DontUpload.cs" />
     <Compile Include="Main.cs" />
     <Compile Include="Patches\Patch_ActorExtentions.cs" />
     <Compile Include="Patches\Patch_AIPilot.cs" />

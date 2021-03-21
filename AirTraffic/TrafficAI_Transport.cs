@@ -21,6 +21,8 @@ public class TrafficAI_Transport : TrafficAI_Base
     public KinematicPlane kPlane;
     public FuelTank fuelTank;
 
+    public Health health;
+
     public float normalSpeed;
 
     //public Animator doorAnimator;
@@ -50,18 +52,30 @@ public class TrafficAI_Transport : TrafficAI_Base
 
         normalSpeed = pilot.navSpeed;
 
-        GetComponent<Health>().OnDeath.AddListener(OnDeath);
+        health = GetComponent<Health>();
+        health.OnDeath.AddListener(OnDeath);
     }
 
     void FixedUpdate() {
         UpdateTask();
-        if (AirTraffic.DistanceFromOrigin(VTMapManager.WorldToGlobalPoint(transform.position)) > AirTraffic.trafficRadius * 1.01f)
+        float maxDistance = AirTraffic.trafficRadius * 1.01f;
+        if ((AirTraffic.instance.mpMode || AirTraffic.instance.mpTestMode) && AirTraffic.instance.akutan == false) {
+            maxDistance = AirTraffic.mapRadius * 1.4f;
+        }
+        if (AirTraffic.DistanceFromOrigin(VTMapManager.WorldToGlobalPoint(transform.position)) > maxDistance)
         {
-            Debug.Log(gameObject.name + " went outta bounds, respawning elsewhere");
-            Vector3D pos = AirTraffic.PointOnCruisingRadius();
-            Vector3 dir = -pos.toVector3;
-            dir.y = 0;
-            Spawn(pos, dir);
+            if (aircraft.aiPilot.commandState == AIPilot.CommandStates.Orbit)
+            {
+                Debug.Log(gameObject.name + " went outta bounds, respawning elsewhere");
+                Vector3D pos = AirTraffic.PointOnCruisingRadius();
+                Vector3 dir = -pos.toVector3;
+                dir.y = 0;
+                Spawn(pos, dir);
+            }
+            else {
+                Debug.Log(gameObject.name + " went outta bounds untintentionally, destroying them for our saftey");
+                health.Kill();
+            }
         }
     }
 
@@ -97,5 +111,9 @@ public class TrafficAI_Transport : TrafficAI_Base
             AirTraffic.potentialTasks[currentTask].EndTask(this);
         }
         AirTraffic.activeAircraftAmmount--;
+
+        Destroy(waypoint.GetTransform().gameObject);
+        Destroy(this);
+        Destroy(aircraft.unitSpawner.gameObject);
     }
 }

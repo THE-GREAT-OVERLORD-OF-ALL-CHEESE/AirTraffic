@@ -8,8 +8,8 @@ using Harmony;
 using Oculus.Platform;
 using UnityEngine;
 
-/*
-[HarmonyPatch(typeof(AIPilot), "ResetAtParking")]
+
+/*[HarmonyPatch(typeof(AIPilot), "ResetAtParking")]
 class Patch_ActorExtensions_ResetAtParking
 {
     [HarmonyPrefix]
@@ -17,7 +17,7 @@ class Patch_ActorExtensions_ResetAtParking
     {
         if (__instance.gameObject.GetComponent<TrafficAI_Transport>() != null)
         {
-            Debug.Log("Traffic aircraft is reseting at parking");
+            /*Debug.Log("Traffic aircraft is reseting at parking");
 
             foreach(CarrierSpawnPoint carrierSpawnPoint in cSpawn.spawnPoints) {
                 if (carrierSpawnPoint.spawnTf == parkingNodeTf)
@@ -29,12 +29,23 @@ class Patch_ActorExtensions_ResetAtParking
             }
 
             __result = true;
-            return true;
+            return true;/
         }
         else
         {
-            __result = true;
-            return true;
+            /*__result = true;
+             return true;/
         }
+
+        Debug.Log("Traffic aircraft is reseting at parking");
+        if (__instance.aiSpawn && parkingNodeTf != null)
+        {
+            Debug.Log("We gave an AI spawn and a parking transform");
+            AirTraffic.instance.StartCoroutine(AirTraffic.ResetAtParkingRoutine(__instance, cSpawn, parkingNodeTf));
+            __result = true;
+        }
+        Debug.Log("We have an AI spawn and a parking transform");
+        __result = false;
+        return false;
     }
 }*/
