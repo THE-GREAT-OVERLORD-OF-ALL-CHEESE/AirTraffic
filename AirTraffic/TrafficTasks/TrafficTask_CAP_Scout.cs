@@ -35,7 +35,7 @@ class TrafficTask_CAP_Scout : TrafficTask_CAP
         base.StartTask(ai);
     }
 
-    public override void UpdateTask(TrafficAI_Base ai)
+    public override void UpdateTask(TrafficAI_Base ai, float deltaTime)
     {
         TrafficAI_CAP capAI = (TrafficAI_CAP)ai;
         Vector3 flatPos = capAI.formation[0].transform.position;

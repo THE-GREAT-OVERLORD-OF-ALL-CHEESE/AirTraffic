@@ -56,8 +56,8 @@ public class TrafficAI_Transport : TrafficAI_Base
         health.OnDeath.AddListener(OnDeath);
     }
 
-    void FixedUpdate() {
-        UpdateTask();
+    protected override void UpdateTask() {
+        base.UpdateTask();
         float maxDistance = AirTraffic.trafficRadius * 1.01f;
         if ((AirTraffic.instance.mpMode || AirTraffic.instance.mpTestMode) && AirTraffic.instance.akutan == false) {
             maxDistance = AirTraffic.mapRadius * 1.4f;
@@ -73,8 +73,10 @@ public class TrafficAI_Transport : TrafficAI_Base
                 Spawn(pos, dir);
             }
             else {
-                Debug.Log(gameObject.name + " went outta bounds untintentionally, destroying them for our saftey");
-                health.Kill();
+                if (health.normalizedHealth != 0) {
+                    Debug.Log(gameObject.name + " went outta bounds untintentionally, destroying them for our saftey");
+                    health.Kill();
+                }
             }
         }
     }
@@ -83,18 +85,17 @@ public class TrafficAI_Transport : TrafficAI_Base
         base.Spawn(pos, dir);
         rb.velocity = aircraft.transform.forward * pilot.navSpeed;
 
-        //aircraft.SetOrbitNow(waypoint, 10000, AirTraffic.cruisingAltitudes.Random());
         pilot.CommandCancelOverride();
 
-        gearAnimator.RetractImmediate();
+        gearAnimator?.RetractImmediate();
         tailHook?.RetractHook();
         catHook?.SetState(0);
         wingRotator?.SetDefault();
-        refuelPort.Close();
+        refuelPort?.Close();
 
-        kPlane.SetToKinematic();
+        kPlane?.SetToKinematic();
 
-        fuelTank.SetNormFuel(1);
+        fuelTank?.SetNormFuel(1);
     }
 
     public override void OnStartTask()
@@ -112,8 +113,20 @@ public class TrafficAI_Transport : TrafficAI_Base
         }
         AirTraffic.activeAircraftAmmount--;
 
-        Destroy(waypoint.GetTransform().gameObject);
+        if (waypoint.GetTransform() != null)
+        {
+            Destroy(waypoint.GetTransform().gameObject);
+        }
+        else {
+            Debug.Log("Couldn't destroy waypoint, it was null");
+        }
         Destroy(this);
-        Destroy(aircraft.unitSpawner.gameObject);
+        if (aircraft.unitSpawner != null)
+        {
+            Destroy(aircraft.unitSpawner.gameObject);
+        }
+        else {
+            Debug.Log("Couldn't destroy unit spawner, it was null");
+        }
     }
 }

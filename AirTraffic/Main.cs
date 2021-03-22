@@ -41,6 +41,9 @@ public class AirTraffic : VTOLMOD
     public UnityAction<bool> useBomber_changed;
     public bool useBomber = true;//true
 
+    public UnityAction<bool> useEnemy_changed;
+    public bool useEnemy = true;//true
+
     public UnityAction<bool> mpTestMode_changed;
     public bool mpTestMode = false;//false
 
@@ -48,6 +51,8 @@ public class AirTraffic : VTOLMOD
     public bool host = false;
 
     public bool akutan = false;
+
+    public float updateTimer;
 
     public override void ModLoaded()
     {
@@ -93,6 +98,10 @@ public class AirTraffic : VTOLMOD
         settings.CreateCustomLabel("Allow bombers to spawn as supersonic transport:");
         settings.CreateBoolSetting("(Default = true)", useBomber_changed, useBomber);
 
+        useBomber_changed += useBomber_Setting;
+        settings.CreateCustomLabel("Allow enemy aircraft to spawn as transport:");
+        settings.CreateBoolSetting("(Default = true)", useEnemy_changed, useEnemy);
+
         mpTestMode_changed += mpTestMode_Setting;
         settings.CreateCustomLabel("MP Test Mode:");
         settings.CreateBoolSetting("(Default = false)", mpTestMode_changed, mpTestMode);
@@ -116,7 +125,7 @@ public class AirTraffic : VTOLMOD
         }
         if (useTransportBig)
         {
-            spawnableAircraft.Add(new TrafficAircraft_E4());
+            spawnableAircraft.Add(new TrafficAircraft_E4());//removed due to nre
             spawnableAircraft.Add(new TrafficAircraft_KC49());
         }
         if (useTransportDrone)
@@ -130,14 +139,24 @@ public class AirTraffic : VTOLMOD
         }
         if (useFighters)
         {
-            spawnableAircraft.Add(new TrafficAircraft_FA26());
+            //spawnableAircraft.Add(new TrafficAircraft_FA26());
             spawnableAircraft.Add(new TrafficAircraft_F45());
         }
         if (useBomber)
         {
             //bombers suck at taxiing, so they cannot land
-            spawnableAircraft.Add(new TrafficAircraft_Bomber());
-        }        
+            spawnableAircraft.Add(new TrafficAircraft_Bomber());//removed due to performance
+        }
+        if (useEnemy)
+        {
+            spawnableAircraft.Add(new TrafficAircraft_ASF30());
+            spawnableAircraft.Add(new TrafficAircraft_ASF33());
+            spawnableAircraft.Add(new TrafficAircraft_ASF58());
+
+            spawnableAircraft.Add(new TrafficAircraft_EBomber());
+
+            spawnableAircraft.Add(new TrafficAircraft_GAV25());
+        }
     }
 
     public void targetAircraftAmmount_Setting(int newval)
@@ -172,6 +191,12 @@ public class AirTraffic : VTOLMOD
     public void useBomber_Setting(bool newval)
     {
         useBomber = newval;
+        UpdateTransportAircraft();
+    }
+
+    public void useEnemy_Setting(bool newval)
+    {
+        useEnemy = newval;
         UpdateTransportAircraft();
     }
 
@@ -220,13 +245,17 @@ public class AirTraffic : VTOLMOD
     }
 
     void FixedUpdate() {
-        if ((currentScene == VTOLScenes.Akutan || currentScene == VTOLScenes.CustomMapBase) && activeAircraftAmmount < targetAircraftAmmount && spawnableAircraft.Count > 0)
-        {
-            Debug.Log("We lost an aircraft somewhere, adding a new one!");
-            Vector3D pos = PointOnCruisingRadius();
-            Vector3 dir = -pos.toVector3;
-            dir.y = 0;
-            SpawnRandomAircraft(pos, dir);
+        updateTimer += Time.fixedDeltaTime;
+        if (updateTimer > 1) {
+            updateTimer = 0;
+            if ((currentScene == VTOLScenes.Akutan || currentScene == VTOLScenes.CustomMapBase) && activeAircraftAmmount < targetAircraftAmmount && spawnableAircraft.Count > 0)
+            {
+                Debug.Log("We lost an aircraft somewhere, adding a new one!");
+                Vector3D pos = PointOnCruisingRadius();
+                Vector3 dir = -pos.toVector3;
+                dir.y = 0;
+                SpawnRandomAircraft(pos, dir);
+            }
         }
     }
 

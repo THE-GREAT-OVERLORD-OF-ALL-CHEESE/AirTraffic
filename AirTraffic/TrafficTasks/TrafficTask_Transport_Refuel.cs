@@ -18,9 +18,10 @@ class TrafficTask_Transport_Refuel : TrafficTask_Transport
 
     public override bool CanStartTask(TrafficAI_Base ai)
     {
+        TrafficAI_Transport transportAI = (TrafficAI_Transport)ai;
         if (base.CanStartTask(ai))
         {
-            return refuelPlane != null;
+            return refuelPlane != null && transportAI.pilot.refuelPort;
         }
         else {
             return false;

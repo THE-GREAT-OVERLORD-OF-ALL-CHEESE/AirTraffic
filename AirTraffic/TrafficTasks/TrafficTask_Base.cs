@@ -32,7 +32,7 @@ public class TrafficTask_Base
         Debug.Log("Task started, there are now " + aircraftDoingTask.Count + " doing task: " + taskName);
     }
 
-    public virtual void UpdateTask(TrafficAI_Base ai)
+    public virtual void UpdateTask(TrafficAI_Base ai, float deltaTime)
     {
 
     }

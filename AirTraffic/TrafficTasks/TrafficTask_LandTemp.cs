@@ -44,11 +44,11 @@ class TrafficTask_LandTemp : TrafficTask_Transport
         base.StartTask(ai);
     }
 
-    public override void UpdateTask(TrafficAI_Base ai)
+    public override void UpdateTask(TrafficAI_Base ai, float deltaTime)
     {
         TrafficAI_Transport transportAI = (TrafficAI_Transport)ai;
         if (transportAI.pilot.commandState == AIPilot.CommandStates.Park) {
-            idleTimer -= Time.fixedDeltaTime;
+            idleTimer -= deltaTime;
             if (idleTimer < 0) {
                 transportAI.aircraft.TakeOff();
             }
