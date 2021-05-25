@@ -71,6 +71,9 @@
     <Reference Include="UnityEngine.PhysicsModule">
       <HintPath>..\..\..\..\..\VTOLVR_Data\Managed\UnityEngine.PhysicsModule.dll</HintPath>
     </Reference>
+    <Reference Include="Valve.Newtonsoft.Json">
+      <HintPath>..\..\..\..\..\VTOLVR_Data\Managed\Valve.Newtonsoft.Json.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DontUpload.cs" />

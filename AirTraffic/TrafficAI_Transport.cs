@@ -59,7 +59,7 @@ public class TrafficAI_Transport : TrafficAI_Base
     protected override void UpdateTask() {
         base.UpdateTask();
         float maxDistance = AirTraffic.trafficRadius * 1.01f;
-        if ((AirTraffic.instance.mpMode || AirTraffic.instance.mpTestMode) && AirTraffic.instance.akutan == false) {
+        if ((AirTraffic.instance.mpMode || AirTraffic.settings.mpTestMode) && AirTraffic.instance.akutan == false) {
             maxDistance = AirTraffic.mapRadius * 1.4f;
         }
         if (AirTraffic.DistanceFromOrigin(VTMapManager.WorldToGlobalPoint(transform.position)) > maxDistance)
