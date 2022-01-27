@@ -13,9 +13,6 @@ public class AirTraffic : VTOLMOD
 
     public VTOLScenes currentScene;
 
-    public static int activeAircraftAmmount;
-
-    public List<TrafficAircraft_Base> spawnableAircraft;
     public static List<TrafficTask_Base> potentialTasks;
 
 
@@ -29,12 +26,7 @@ public class AirTraffic : VTOLMOD
     public class AirTrafficSettings
     {
         public int targetAircraftAmmount = 15;//was 15
-        public bool useTransportAV42 = true;//true
-        public bool useTransportBig = true;//true
-        public bool useTransportDrone = true;//true
-        public bool useFighters = true;//true
-        public bool useBomber = true;//true
-        public bool useEnemy = true;//true
+
         public bool mpTestMode = false;//false
     }
 
@@ -79,33 +71,6 @@ public class AirTraffic : VTOLMOD
         modSettings.CreateCustomLabel("Ammount of transport aircraft:");
         modSettings.CreateIntSetting("(Default = 15)", targetAircraftAmmount_changed, settings.targetAircraftAmmount);
 
-        useTransportAV42_changed += useTransportAV42_Setting;
-        modSettings.CreateCustomLabel("Allow AV-42 to spawn as transport:");
-        modSettings.CreateBoolSetting("(Default = true)", useTransportAV42_changed, settings.useTransportAV42);
-
-        useTransportBig_changed += useTransportBig_Setting;
-        modSettings.CreateCustomLabel("Allow big aircraft to spawn as transport:");
-        modSettings.CreateCustomLabel("(Modified KC-49 and E-4)");
-        modSettings.CreateBoolSetting("(Default = true)", useTransportBig_changed, settings.useTransportBig);
-
-        useTransportDrone_changed += useTransportDrone_Setting;
-        modSettings.CreateCustomLabel("Allow amazoon drone to spawn as transport:");
-        modSettings.CreateCustomLabel("(Modified refuel plane)");
-        modSettings.CreateBoolSetting("(Default = true)", useTransportDrone_changed, settings.useTransportDrone);
-
-        useFighters_changed += useFighters_Setting;
-        modSettings.CreateCustomLabel("Allow fighter jets to spawn as transport:");
-        modSettings.CreateCustomLabel("(F/A-26 and F45s)");
-        modSettings.CreateBoolSetting("(Default = true)", useFighters_changed, settings.useFighters);
-
-        useBomber_changed += useBomber_Setting;
-        modSettings.CreateCustomLabel("Allow bombers to spawn as supersonic transport:");
-        modSettings.CreateBoolSetting("(Default = true)", useBomber_changed, settings.useBomber);
-
-        useBomber_changed += useBomber_Setting;
-        modSettings.CreateCustomLabel("Allow enemy aircraft to spawn as transport:");
-        modSettings.CreateBoolSetting("(Default = true)", useEnemy_changed, settings.useEnemy);
-
         mpTestMode_changed += mpTestMode_Setting;
         modSettings.CreateCustomLabel("MP Test Mode:");
         modSettings.CreateBoolSetting("(Default = false)", mpTestMode_changed, settings.mpTestMode);
@@ -119,98 +84,12 @@ public class AirTraffic : VTOLMOD
         VTOLAPI.CreateSettingsMenu(modSettings);
 
         instance = this;
-
-        UpdateTransportAircraft();
-    }
-
-    public void UpdateTransportAircraft() {
-        spawnableAircraft = new List<TrafficAircraft_Base>();
-        if (settings.useTransportAV42)
-        {
-            spawnableAircraft.Add(new TrafficAircraft_Base());//its the base class everything inherits from, but also it is actually the AV-42
-        }
-        if (settings.useTransportBig)
-        {
-            spawnableAircraft.Add(new TrafficAircraft_E4());//removed due to nre
-            spawnableAircraft.Add(new TrafficAircraft_KC49());
-        }
-        if (settings.useTransportDrone)
-        {
-            spawnableAircraft.Add(new TrafficAircraft_MQ31());
-        }
-        if (settings.useFighters)
-        {
-            spawnableAircraft.Add(new TrafficAircraft_FA26());
-            spawnableAircraft.Add(new TrafficAircraft_F45());
-        }
-        if (settings.useFighters)
-        {
-            //spawnableAircraft.Add(new TrafficAircraft_FA26());
-            spawnableAircraft.Add(new TrafficAircraft_F45());
-        }
-        if (settings.useBomber)
-        {
-            //bombers suck at taxiing, so they cannot land
-            spawnableAircraft.Add(new TrafficAircraft_Bomber());//removed due to performance
-        }
-        if (settings.useEnemy)
-        {
-            spawnableAircraft.Add(new TrafficAircraft_ASF30());
-            spawnableAircraft.Add(new TrafficAircraft_ASF33());
-            spawnableAircraft.Add(new TrafficAircraft_ASF58());
-
-            spawnableAircraft.Add(new TrafficAircraft_EBomber());
-
-            spawnableAircraft.Add(new TrafficAircraft_GAV25());
-        }
     }
 
     public void targetAircraftAmmount_Setting(int newval)
     {
         settingsChanged = true;
         settings.targetAircraftAmmount = newval;
-    }
-
-    public void useTransportAV42_Setting(bool newval)
-    {
-        settingsChanged = true;
-        settings.useTransportAV42 = newval;
-        UpdateTransportAircraft();
-    }
-
-    public void useTransportBig_Setting(bool newval)
-    {
-        settingsChanged = true;
-        settings.useTransportBig = newval;
-        UpdateTransportAircraft();
-    }
-
-    public void useTransportDrone_Setting(bool newval)
-    {
-        settingsChanged = true;
-        settings.useTransportDrone = newval;
-        UpdateTransportAircraft();
-    }
-
-    public void useFighters_Setting(bool newval)
-    {
-        settingsChanged = true;
-        settings.useFighters = newval;
-        UpdateTransportAircraft();
-    }
-
-    public void useBomber_Setting(bool newval)
-    {
-        settingsChanged = true;
-        settings.useBomber = newval;
-        UpdateTransportAircraft();
-    }
-
-    public void useEnemy_Setting(bool newval)
-    {
-        settingsChanged = true;
-        settings.useEnemy = newval;
-        UpdateTransportAircraft();
     }
 
     public void mpTestMode_Setting(bool newval)
@@ -242,6 +121,11 @@ public class AirTraffic : VTOLMOD
     {
         CheckSave();
         StartCoroutine("SetupScene");
+    }
+
+    private void OnApplicationQuit()
+    {
+        CheckSave();
     }
 
     private void CheckSave()
@@ -315,11 +199,14 @@ public class AirTraffic : VTOLMOD
         InitialSpawnTraffic(settings.targetAircraftAmmount);
     }
 
-    void FixedUpdate() {
+    private void FixedUpdate() {
+        if (mpMode || host)
+            return;
+
         updateTimer += Time.fixedDeltaTime;
         if (updateTimer > 1) {
             updateTimer = 0;
-            if ((currentScene == VTOLScenes.Akutan || currentScene == VTOLScenes.CustomMapBase || currentScene == VTOLScenes.CustomMapBase_OverCloud) && activeAircraftAmmount < settings.targetAircraftAmmount && spawnableAircraft.Count > 0)
+            if ((currentScene == VTOLScenes.Akutan || currentScene == VTOLScenes.CustomMapBase || currentScene == VTOLScenes.CustomMapBase_OverCloud) && AircraftSpawner.activeAircraft.Count < settings.targetAircraftAmmount && AircraftSpawner.spawnableAircraftList.Length > 0)
             {
                 Debug.Log("We lost an aircraft somewhere, adding a new one!");
                 Vector3D pos = PointOnCruisingRadius();
@@ -344,7 +231,7 @@ public class AirTraffic : VTOLMOD
 
     void HostCheck()
     {
-        host = Networker.isHost;
+        //host = Networker.isHost;
     }
 
     void SetupTasks()
@@ -356,16 +243,19 @@ public class AirTraffic : VTOLMOD
         
         foreach (string airportId in VTScenario.current.GetAllAirportIDs())
         {
+            AirportManager airport = new AirportReference(airportId).GetAirport();
+
             float maxSize = 0;
             float maxMass = 0;
+            bool carrier = airport.isCarrier;
             
-            foreach (AirportManager.ParkingSpace parkingSpace in new AirportReference(airportId).GetAirport().parkingSpaces) {
+            foreach (AirportManager.ParkingSpace parkingSpace in airport.parkingSpaces) {
                 if (parkingSpace.parkingSize > maxSize) {
                     maxSize = parkingSpace.parkingSize;
                 }
             }
 
-            foreach (Runway runway in new AirportReference(airportId).GetAirport().runways)
+            foreach (Runway runway in airport.runways)
             {
                 if (runway.maxMass > maxMass)
                 {
@@ -373,10 +263,13 @@ public class AirTraffic : VTOLMOD
                 }
             }
 
-            potentialTasks.Add(new TrafficTask_LandAtAirport("land at airport " + new AirportReference(airportId).GetAirport().name, new AirportReference(airportId), maxMass, maxSize, new AirportReference(airportId).GetAirport().vtolOnlyLanding));
-            Debug.Log("Added task land at " + airportId);
-            Debug.Log("Maximum landing mass is " + maxMass);
-            Debug.Log("Maximum landing size is " + maxSize);
+            if (carrier)
+            {
+                potentialTasks.Add(new TrafficTask_LandAtAirport("land at airport " + airport.name, new AirportReference(airportId), maxMass, maxSize, airport.vtolOnlyLanding));
+                Debug.Log("Added task land at " + airportId);
+                Debug.Log("Maximum landing mass is " + maxMass);
+                Debug.Log("Maximum landing size is " + maxSize);
+            }
 
             //potentialTasks.Add(new TrafficTask_CAP_Scout("scout airbase: " + new AirportReference(airportId).GetAirport().name, VTMapManager.WorldToGlobalPoint(new AirportReference(airportId).GetAirport().transform.position)));
         }
@@ -402,11 +295,7 @@ public class AirTraffic : VTOLMOD
             return;
         }
 
-        //GameObject aircraft = new TrafficAircraft_CAP().SpawnAircraft();
-        //float bearing2 = UnityEngine.Random.Range(0f, 360f) * Mathf.Deg2Rad;
-        //aircraft.GetComponent<TrafficAI_CAP>().Spawn(PointInCruisingRadius(), new Vector3(Mathf.Sin(bearing2), 0, Mathf.Cos(bearing2)));
-
-        activeAircraftAmmount = 0;
+        AircraftSpawner.activeAircraft = new List<TrafficAI_Transport>();
         
         for (int i = 0; i < settings.targetAircraftAmmount; i++) {
             float bearing = UnityEngine.Random.Range(0f, 360f) * Mathf.Deg2Rad;
@@ -415,46 +304,12 @@ public class AirTraffic : VTOLMOD
     }
 
     void SpawnRandomAircraft(Vector3D pos, Vector3 dir) {
-        if (mpMode && host == false) {
-            return;
-        }
-
-        if (spawnableAircraft.Count > 0)
-        {
-            GameObject aircraft = spawnableAircraft[UnityEngine.Random.Range(0, spawnableAircraft.Count)].SpawnAircraft();
-
-            FloatingOriginTransform floatingTransform = aircraft.AddComponent<FloatingOriginTransform>();
-            if (floatingTransform != null)
-            {
-                floatingTransform.SetRigidbody(aircraft.GetComponent<Rigidbody>());
-            }
-            aircraft.GetComponent<Rigidbody>().interpolation = RigidbodyInterpolation.Interpolate;
-
-            TrafficAI_Transport ai = aircraft.AddComponent<TrafficAI_Transport>();
-            GameObject unitSpawner = new GameObject();
-            ai.aircraft.unitSpawner = unitSpawner.AddComponent<UnitSpawner>();
-            Traverse unitSpawnerTraverse = Traverse.Create(ai.aircraft.unitSpawner);
-            unitSpawnerTraverse.Field("_spawned").SetValue(true);
-            Traverse aircraftSpawnerTraverse = Traverse.Create(ai.aircraft);
-            aircraftSpawnerTraverse.Field("taxiSpeed").SetValue(ai.aircraft.aiPilot.taxiSpeed);
-            ai.Spawn(pos, dir);
-
-            Debug.Log("Spawned " + aircraft.name + " as air traffic");
-            activeAircraftAmmount++;
-
-            if (mpMode) {
-                Debug.Log("MP is enabled, networking this aircraft!");
-                MPSetUpAircraft(ai.aircraft.actor);
-            }
-        }
-        else {
-            Debug.Log("No aircraft were available, cannot spawn a traffic aircraft.");
-        }
+        AircraftSpawner.SpawnRandomAircraft(pos, dir);
     }
 
     private void MPSetUpAircraft(Actor actor) {
-        AIManager.setupAIAircraft(actor);
-        AIManager.TellClientAboutAI(new Steamworks.CSteamID(0));
+        //AIManager.setupAIAircraft(actor);
+        //AIManager.TellClientAboutAI(new Steamworks.CSteamID(0));
     }
 
     public static Vector3D GetPlayerPosition()
@@ -494,7 +349,7 @@ public class AirTraffic : VTOLMOD
         float bearing = UnityEngine.Random.Range(0f, 360f) * Mathf.Deg2Rad;
         Vector3D playerPos = GetPlayerPosition();
 
-        return new Vector3D(Mathf.Sin(bearing * Mathf.Deg2Rad) * GetTrafficRadius() + playerPos.x, cruisingAltitudes.Random(), Mathf.Cos(bearing * Mathf.Deg2Rad) * GetTrafficRadius() + playerPos.z);
+        return new Vector3D(Mathf.Sin(bearing) * GetTrafficRadius() + playerPos.x, cruisingAltitudes.Random(), Mathf.Cos(bearing) * GetTrafficRadius() + playerPos.z);
     }
 
     public static Vector3D PointOnMapRadius()

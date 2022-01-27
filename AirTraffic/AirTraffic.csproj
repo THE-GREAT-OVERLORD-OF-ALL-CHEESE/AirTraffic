@@ -76,26 +76,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DontUpload.cs" />
     <Compile Include="Main.cs" />
     <Compile Include="Patches\Patch_ActorExtentions.cs" />
     <Compile Include="Patches\Patch_AIPilot.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TrafficAircraft\TrafficAircraft_BomberEnemy.cs" />
-    <Compile Include="TrafficAircraft\TrafficAircraft_F45.cs" />
-    <Compile Include="TrafficAircraft\TrafficAircraft_ASF33.cs" />
-    <Compile Include="TrafficAircraft\TrafficAircraft_ASF58.cs" />
-    <Compile Include="TrafficAircraft\TrafficAircraft_GAV25.cs" />
-    <Compile Include="TrafficAircraft\TrafficAircraft_ASF30.cs" />
-    <Compile Include="TrafficAircraft\TrafficAircraft_FA26.cs" />
-    <Compile Include="TrafficAircraft\TrafficAircraft_Base.cs" />
-    <Compile Include="TrafficAircraft\TrafficAircraft_Bomber.cs" />
-    <Compile Include="TrafficAircraft\TrafficAircraft_CAP.cs" />
-    <Compile Include="TrafficAircraft\TrafficAircraft_KC49.cs" />
-    <Compile Include="TrafficAircraft\TrafficAircraft_MQ31.cs" />
-    <Compile Include="TrafficAircraft\TrafficAircraft_E4.cs" />
     <Compile Include="TrafficAI_CAP.cs" />
     <Compile Include="TrafficAI_Base.cs" />
+    <Compile Include="AircraftSpawner.cs" />
     <Compile Include="TrafficTasks\TrafficTask_Transport_Refuel.cs" />
     <Compile Include="TrafficTasks\TrafficTask_CAP_Refuel.cs" />
     <Compile Include="TrafficTasks\TrafficTask_CAP_Scout.cs" />
@@ -110,8 +97,6 @@
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>IF EXIST "C:\Program Files (x86)\Steam\steamapps\common\VTOL VR\VTOLVR_ModLoader\VTOLVR-ModLoader.exe" (
-copy "$(TargetPath)" "C:\Program Files (x86)\Steam\steamapps\common\VTOL VR\VTOLVR_ModLoader\projects\My Mods\AirTraffic\Builds\AirTraffic.dll"
-)</PostBuildEvent>
+    <PostBuildEvent>copy "$(TargetPath)" "C:\Program Files (x86)\Steam\steamapps\common\VTOL VR\VTOLVR_ModLoader\projects\My Mods\AirTraffic\Builds\AirTraffic.dll"</PostBuildEvent>
   </PropertyGroup>
 </Project>

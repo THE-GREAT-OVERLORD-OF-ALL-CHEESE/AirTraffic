@@ -26,10 +26,11 @@ class TrafficTask_LandAtAirport : TrafficTask_Transport
     {
         if (base.CanStartTask(ai))
         {
-            if (ai.gameObject.name == "ABomberAI")
+            TrafficAI_Transport transportAI = (TrafficAI_Transport)ai;
+
+            if (ai.gameObject.name == "ABomberAI" || transportAI.gearAnimator == null)
                 return false;
 
-            TrafficAI_Transport transportAI = (TrafficAI_Transport)ai;
             return transportAI.pilot.parkingSize < maxSize && (transportAI.rb.mass < maxMass || (vtolOnly && transportAI.pilot.isVtol)) && ParkingAvailable(transportAI.pilot.parkingSize);
         }
         else {
@@ -49,6 +50,7 @@ class TrafficTask_LandAtAirport : TrafficTask_Transport
         Debug.Log("Trying to land on " + airport.id);
         TrafficAI_Transport transportAI = (TrafficAI_Transport)ai;
         transportAI.aircraft.RearmAt(airport);
+        transportAI.aircraft.aiPilot.SetTakeOffAfterLanding(true);
         base.StartTask(ai);
     }
 

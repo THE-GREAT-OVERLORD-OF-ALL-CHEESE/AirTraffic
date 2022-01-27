@@ -17,6 +17,7 @@ public class TrafficAI_Transport : TrafficAI_Base
     public CatapultHook catHook;
     public RefuelPort refuelPort;
     public RotationToggle wingRotator;
+    public WeaponManager wm;
 
     public KinematicPlane kPlane;
     public FuelTank fuelTank;
@@ -28,7 +29,7 @@ public class TrafficAI_Transport : TrafficAI_Base
     //public Animator doorAnimator;
     //public float doorPosition;
 
-    void Awake() {
+    private void Awake() {
         aircraft = GetComponent<AIAircraftSpawn>();
         pilot = GetComponent<AIPilot>();
         rb = GetComponent<Rigidbody>();
@@ -39,6 +40,7 @@ public class TrafficAI_Transport : TrafficAI_Base
         catHook = GetComponentInChildren<CatapultHook>();
         refuelPort = GetComponentInChildren<RefuelPort>();
         wingRotator = pilot.wingRotator;
+        wm = GetComponentInChildren<WeaponManager>();
 
         kPlane = GetComponent<KinematicPlane>();
         fuelTank = GetComponent<FuelTank>();
@@ -58,17 +60,15 @@ public class TrafficAI_Transport : TrafficAI_Base
 
     protected override void UpdateTask() {
         base.UpdateTask();
-        float maxDistance = AirTraffic.trafficRadius * 1.01f;
-        if ((AirTraffic.instance.mpMode || AirTraffic.settings.mpTestMode) && AirTraffic.instance.akutan == false) {
-            maxDistance = AirTraffic.mapRadius * 1.4f;
-        }
+        float maxDistance = AirTraffic.GetTrafficRadius() * 1.01f;
+
         if (AirTraffic.DistanceFromOrigin(VTMapManager.WorldToGlobalPoint(transform.position)) > maxDistance)
         {
             if (aircraft.aiPilot.commandState == AIPilot.CommandStates.Orbit)
             {
-                Debug.Log(gameObject.name + " went outta bounds, respawning elsewhere");
+                Debug.Log(gameObject.name + $" went outta bounds {AirTraffic.DistanceFromOrigin(VTMapManager.WorldToGlobalPoint(transform.position))}m away from center, respawning elsewhere");
                 Vector3D pos = AirTraffic.PointOnCruisingRadius();
-                Vector3 dir = -pos.toVector3;
+                Vector3 dir = (AirTraffic.GetPlayerPosition() - pos).toVector3;
                 dir.y = 0;
                 Spawn(pos, dir);
             }
@@ -83,7 +83,9 @@ public class TrafficAI_Transport : TrafficAI_Base
 
     public override void Spawn(Vector3D pos, Vector3 dir) {
         base.Spawn(pos, dir);
+        kPlane.SetToDynamic();
         rb.velocity = aircraft.transform.forward * pilot.navSpeed;
+        kPlane.SetToKinematic();
 
         pilot.CommandCancelOverride();
 
@@ -93,7 +95,7 @@ public class TrafficAI_Transport : TrafficAI_Base
         wingRotator?.SetDefault();
         refuelPort?.Close();
 
-        kPlane?.SetToKinematic();
+        kPlane.SetToKinematic();
 
         fuelTank?.SetNormFuel(1);
     }
@@ -106,12 +108,12 @@ public class TrafficAI_Transport : TrafficAI_Base
         }
     }
 
-    void OnDeath() {
+    public void OnDeath() {
         Debug.Log(gameObject.name + " just died");
         if (currentTask != -1) {
             AirTraffic.potentialTasks[currentTask].EndTask(this);
         }
-        AirTraffic.activeAircraftAmmount--;
+        AircraftSpawner.activeAircraft.Remove(this);
 
         if (waypoint.GetTransform() != null)
         {
