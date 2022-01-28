@@ -5,21 +5,15 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Harmony;
-using Oculus.Platform;
 using UnityEngine;
 
-[HarmonyPatch(typeof(AIAircraftSpawn), "TakeOff")]
-class Patch_AIAircraftSpawn_TakeOff
+[HarmonyPatch(typeof(AIPilot), "TakeOffCarrier")]
+class Patch_AIPilot_TakeOffCarrier
 {
     [HarmonyPrefix]
-    static bool Prefix(AIAircraftSpawn __instance)
+    static bool Prefix(AIPilot __instance)
     {
-        Traverse aiPilotTraverse = Traverse.Create(__instance.aiPilot);
-        if ((bool)aiPilotTraverse.Field("takeOffAfterLanding").GetValue())
-        {
-            __instance.aiPilot.commandState = AIPilot.CommandStates.Park;
-        }
-
+        __instance.commandState = AIPilot.CommandStates.Park;
         return true;
     }
 }

@@ -6,6 +6,8 @@ using System.Reflection;
 using UnityEngine;
 using UnityEngine.Events;
 using Valve.Newtonsoft.Json;
+using VTNetworking;
+using VTOLVR.Multiplayer;
 
 public class AirTraffic : VTOLMOD
 {
@@ -41,9 +43,6 @@ public class AirTraffic : VTOLMOD
 
     public static AirTrafficSettings settings;
     public bool settingsChanged;
-
-    public bool mpMode = false;
-    public bool host = false;
 
     public bool akutan = false;
 
@@ -191,20 +190,19 @@ public class AirTraffic : VTOLMOD
         }
 
         mapRadius = VTMapManager.fetch.map.mapSize * 1500;
-        if (mpMode || settings.mpTestMode) {
+        if (VTOLMPUtils.IsMultiplayer() || settings.mpTestMode) {
             Debug.Log("mp mode: airtraffic will operate map wide");
         }
-        MPCheck();
         SetupTasks();
         InitialSpawnTraffic(settings.targetAircraftAmmount);
     }
 
     private void FixedUpdate() {
-        if (mpMode || host)
+        if (VTOLMPUtils.IsMultiplayer() && VTOLMPLobbyManager.isLobbyHost == false)
             return;
 
         updateTimer += Time.fixedDeltaTime;
-        if (updateTimer > 1) {
+        if (updateTimer > 5) {
             updateTimer = 0;
             if ((currentScene == VTOLScenes.Akutan || currentScene == VTOLScenes.CustomMapBase || currentScene == VTOLScenes.CustomMapBase_OverCloud) && AircraftSpawner.activeAircraft.Count < settings.targetAircraftAmmount && AircraftSpawner.spawnableAircraftList.Length > 0)
             {
@@ -215,23 +213,6 @@ public class AirTraffic : VTOLMOD
                 SpawnRandomAircraft(pos, dir);
             }
         }
-    }
-
-    void MPCheck() {
-        foreach (Mod mod in VTOLAPI.GetUsersMods()) {
-            if (mod.name == "Multiplayer") {
-                Debug.Log("Airtraffic has detected MP, enbling MP mode");
-                mpMode = true;
-                HostCheck();
-                break;
-            }
-        }
-        Debug.Log("The MP mod is not installed.");
-    }
-
-    void HostCheck()
-    {
-        //host = Networker.isHost;
     }
 
     void SetupTasks()
@@ -247,7 +228,6 @@ public class AirTraffic : VTOLMOD
 
             float maxSize = 0;
             float maxMass = 0;
-            bool carrier = airport.isCarrier;
             
             foreach (AirportManager.ParkingSpace parkingSpace in airport.parkingSpaces) {
                 if (parkingSpace.parkingSize > maxSize) {
@@ -263,13 +243,10 @@ public class AirTraffic : VTOLMOD
                 }
             }
 
-            if (carrier)
-            {
-                potentialTasks.Add(new TrafficTask_LandAtAirport("land at airport " + airport.name, new AirportReference(airportId), maxMass, maxSize, airport.vtolOnlyLanding));
-                Debug.Log("Added task land at " + airportId);
-                Debug.Log("Maximum landing mass is " + maxMass);
-                Debug.Log("Maximum landing size is " + maxSize);
-            }
+            potentialTasks.Add(new TrafficTask_LandAtAirport("land at airport " + airport.name, new AirportReference(airportId), maxMass, maxSize, airport.vtolOnlyLanding));
+            Debug.Log("Added task land at " + airportId);
+            Debug.Log("Maximum landing mass is " + maxMass);
+            Debug.Log("Maximum landing size is " + maxSize);
 
             //potentialTasks.Add(new TrafficTask_CAP_Scout("scout airbase: " + new AirportReference(airportId).GetAirport().name, VTMapManager.WorldToGlobalPoint(new AirportReference(airportId).GetAirport().transform.position)));
         }
@@ -291,7 +268,7 @@ public class AirTraffic : VTOLMOD
 
     void InitialSpawnTraffic(int ammount) {
         Debug.Log("Spawing initial airtraffic");
-        if (mpMode && host == false) {
+        if (VTOLMPUtils.IsMultiplayer() && VTOLMPLobbyManager.isLobbyHost == false) {
             return;
         }
 
@@ -303,30 +280,32 @@ public class AirTraffic : VTOLMOD
         }
     }
 
-    void SpawnRandomAircraft(Vector3D pos, Vector3 dir) {
+    private void SpawnRandomAircraft(Vector3D pos, Vector3 dir) {
         AircraftSpawner.SpawnRandomAircraft(pos, dir);
-    }
-
-    private void MPSetUpAircraft(Actor actor) {
-        //AIManager.setupAIAircraft(actor);
-        //AIManager.TellClientAboutAI(new Steamworks.CSteamID(0));
     }
 
     public static Vector3D GetPlayerPosition()
     {
-        if ((instance.mpMode || settings.mpTestMode) && instance.akutan == false)
+        if ((VTOLMPUtils.IsMultiplayer() || settings.mpTestMode) && instance.akutan == false)
         {
             return new Vector3D(mapRadius, 0, mapRadius);
         }
         else
         {
-            return VTMapManager.WorldToGlobalPoint(FlightSceneManager.instance.playerActor.gameObject.transform.position);
+            if (FlightSceneManager.instance != null && FlightSceneManager.instance.playerActor != null)
+            {
+                return VTMapManager.WorldToGlobalPoint(FlightSceneManager.instance.playerActor.gameObject.transform.position);
+            }
+            else
+            {
+                return Vector3D.zero;
+            }
         }
     }
 
     public static float GetTrafficRadius()
     {
-        if ((instance.mpMode || settings.mpTestMode) && instance.akutan == false)
+        if ((VTOLMPUtils.IsMultiplayer() || settings.mpTestMode) && instance.akutan == false)
         {
             return mapRadius * 1.4f;
         }

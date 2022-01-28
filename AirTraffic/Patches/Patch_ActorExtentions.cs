@@ -5,7 +5,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Harmony;
-using Oculus.Platform;
 using UnityEngine;
 
 [HarmonyPatch(typeof(ActorExtensions), "DebugName")]
